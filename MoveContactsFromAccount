@@ -1,0 +1,34 @@
+trigger trg2 on Account(after Insert)
+{
+    Id i;
+    Set<String> existingEmail = new Set<String>(); 
+    List<Contact> contList = new List<Contact>();
+    List<Contact> conList = new List<Contact>();
+   // List<Account> accList = [Select Id,(Select lastname from Contacts) from Account where Name =: 'Testing'];
+    List<Account> oldAccounts =  [Select Email__c,(Select lastname from Contacts) from Account where Email__c != null];
+    for(Account acct : oldAccounts)
+    {
+        existingEmail.add(acct.Email__c);
+        conList.addAll(acct.Contacts);
+        System.debug('Emails--'+existingEmail);
+        System.debug('Related Contacts--'+conList);
+    }
+    
+    if(trigger.isAfter && trigger.isInsert)
+    {
+        for(Account acc : trigger.new)
+        {
+            if(existingEmail.contains(acc.Email__c))
+            {
+              i = acc.Id;
+                System.debug('Id---'+i);
+            }
+        }
+    }
+    for(Contact con : conList)
+    {
+        con.AccountId = i;
+        contList.add(con);
+    }
+    update contList;
+}
